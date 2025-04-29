@@ -1,0 +1,61 @@
+{
+  "name": "@mipra-helper/condition-plugin",
+  "version": "0.0.1",
+  "description": "mipra helper miniprogram condition compiler plugin.",
+  "main": "./dist/index.cjs.js",
+  "module": "./dist/index.esm.mjs",
+  "typings": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.esm.mjs",
+      "require": "./dist/index.cjs.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "clean": "rimraf ./dist",
+    "lint": "eslint ./src --ext .ts --fix",
+    "format": "prettier --white src/",
+    "build:types": "tsc -p ./tsconfig.json --emitDeclarationOnly",
+    "build:bundle": "ts-node ./build.ts --target=es2022 --platform=node",
+    "build": "npm run lint && npm run build:bundle && npm run build:types",
+    "dev": "npm run lint && npm run build:bundle -- --w && npm run build:types"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yangtianxia/mipra-helper.git",
+    "directory": "packages/condition-plugin"
+  },
+  "keywords": [
+    "mipra",
+    "mipra-helper",
+    "@mipra-helper/condition-plugin"
+  ],
+  "author": "yangtianxia",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/yangtianxia/mipra-helper/issues"
+  },
+  "homepage": "https://github.com/yangtianxia/mipra-helper#readme",
+  "devDependencies": {
+    "@types/shelljs": "^0.8.15"
+  },
+  "dependencies": {
+    "@mipra-helper/define-plugin": "workspace:^",
+    "@mipra-helper/env-plugin": "workspace:^",
+    "@mipra-helper/tsconfig": "workspace:^",
+    "@txjs/bool": "^1.0.3",
+    "@txjs/shared": "^1.0.5",
+    "cosmiconfig": "^9.0.0",
+    "fs-extra": "^11.3.0",
+    "shelljs": "^0.8.5",
+    "webpack": "^5.99.6"
+  }
+}

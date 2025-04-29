@@ -1,0 +1,17 @@
+{
+  "extends": "@mipra-helper/tsconfig/tsconfig.node",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "module": "NodeNext",
+    "moduleResolution": "nodenext",
+    "declaration": true
+  },
+  "include": [
+    "src/**/*.ts*",
+    "types/**/*.ts*"
+  ],
+  "exclude": [
+    "**/node_modules",
+    "**/.*/"
+  ]
+}

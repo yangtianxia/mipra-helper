@@ -1,0 +1,31 @@
+{
+  "name": "@mipra-helper/tsconfig",
+  "version": "0.0.1",
+  "description": "mipra helper typescript tsconfig.",
+  "main": "./tsconfig.json",
+  "files": [
+    "tsconfig.json",
+    "tsconfig.app.json",
+    "tsconfig.node.json"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yangtianxia/mipra-helper.git",
+    "directory": "packages/tsconfig"
+  },
+  "keywords": [
+    "mipra",
+    "mipra-helper",
+    "@mipra-helper/tsconfig"
+  ],
+  "author": "yangtianxia",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/yangtianxia/mipra-helper/issues"
+  },
+  "homepage": "https://github.com/yangtianxia/mipra-helper#readme"
+}
