@@ -56,7 +56,6 @@
     "@txjs/shared": "^1.0.5",
     "extend": "^3.0.2",
     "fs-extra": "^11.3.0",
-    "shelljs": "^0.8.5",
-    "webpack": "^5.99.6"
+    "shelljs": "^0.8.5"
   }
 }

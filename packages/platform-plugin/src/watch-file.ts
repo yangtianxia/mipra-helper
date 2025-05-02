@@ -2,10 +2,9 @@ import {
   WatchFile,
   type WatchFileOption,
 } from '@mipra-helper/define-plugin/watch-file'
-import { type Compiler } from 'webpack'
 
 interface PlatformWatchFileOption extends WatchFileOption {
-  change: (compiler: Compiler) => void
+  change: (path: string) => void
   close?: () => void
 }
 
@@ -16,11 +15,13 @@ export class PlatformWatchFilePlugin extends WatchFile {
     super(option)
   }
 
+  override name = 'platformWatchFilePlugin'
+
   override close() {
     this.option.close?.()
   }
 
-  override update(compiler: Compiler) {
-    this.option.change(compiler)
+  override update(path: string) {
+    this.option.change(path)
   }
 }
