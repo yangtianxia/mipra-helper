@@ -1,7 +1,13 @@
-import { builder } from '../../scripts/build'
+import builderBatch from '../../scripts/build.batch'
 
-builder({
-  root: true,
-  name: 'index',
-  filepath: 'index.ts',
-})
+builderBatch([
+  {
+    root: true,
+    name: 'index',
+    filepath: 'index.ts',
+  },
+  {
+    name: 'env',
+    filepath: 'env.ts',
+  },
+])

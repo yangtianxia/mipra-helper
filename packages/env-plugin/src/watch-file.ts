@@ -7,7 +7,7 @@ import { shallowMerge } from '@txjs/shared'
 import { dotenv } from './dotenv'
 
 interface EnvWatchFileOption extends WatchFileOption {
-  change(compiler: Compiler): void
+  change(path: string): void
   close?(): void
 }
 
@@ -18,22 +18,27 @@ export class EnvWatchFilePlugin extends WatchFile {
     super(option)
   }
 
+  override name = 'envWatchFilePlugin'
+
   override close() {
     this.option.close?.()
   }
 
-  override update(compiler: Compiler) {
+  override update(path: string, compiler: Compiler) {
     compiler.options.plugins.forEach((plugin: any) => {
       if (plugin && plugin.constructor.name === 'DefinePlugin') {
         const definitions = plugin.definitions
-        const env = dotenv.object()
+        const envObject = dotenv.object()
         Object.keys(definitions).forEach((key) => {
-          if (dotenv.startsWithKey(dotenv.formatKey(key)) && !(key in env)) {
+          if (
+            dotenv.startsWithKey(dotenv.formatKey(key)) &&
+            !(key in envObject)
+          ) {
             delete plugin.definitions[key]
           }
         })
-        plugin.definitions = shallowMerge(plugin.definitions, env)
-        this.option?.change(compiler)
+        plugin.definitions = shallowMerge(plugin.definitions, envObject)
+        this.option?.change(path)
       }
     })
   }

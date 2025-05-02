@@ -1,10 +1,12 @@
-import { definePlugin, processResolve } from '@mipra-helper/define-plugin'
+import {
+  definePlugin,
+  processResolve,
+  kleur,
+} from '@mipra-helper/define-plugin'
 import { shallowMerge } from '@txjs/shared'
 
 import { dotenv } from './dotenv'
 import { EnvWatchFilePlugin } from './watch-file'
-
-export * from './declare'
 
 export { dotenv }
 
@@ -14,7 +16,7 @@ interface EnvPluginOption {
 
 export default definePlugin<EnvPluginOption>(
   (ctx, option) => {
-    option.monitor ??= true
+    option.monitor ??= ctx.isWatch
 
     ctx.modifyWebpackChain(({ chain }) => {
       chain
@@ -25,22 +27,22 @@ export default definePlugin<EnvPluginOption>(
         })
         .end()
 
-      if (ctx.isWatch) {
-        chain
-          .plugin('EnvWatchFilePlugin')
-          .use(EnvWatchFilePlugin, [
-            {
-              monitor: option.monitor,
-              path: processResolve('.env*'),
-              change: () => {
-                ctx.logger('Update completed')
-              },
+      chain
+        .plugin('envWatchFilePlugin')
+        .use(EnvWatchFilePlugin, [
+          {
+            monitor: option.monitor,
+            path: processResolve('.env*'),
+            change: (path: string) => {
+              ctx.logger(`Update injection ${kleur.blue(path)}`)
+              ctx.applyPlugins({
+                name: 'onEnvUpdate',
+                opts: { path },
+              })
             },
-          ])
-          .end()
-      }
-
-      ctx.logger('Injection completed')
+          },
+        ])
+        .end()
     })
   },
   {

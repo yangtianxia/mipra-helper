@@ -11,38 +11,14 @@ interface EnvObject {
   [x: string]: string
 }
 
-type FilterCallback = (
-  key: string,
-  value: string,
-  index: number
-) => boolean | void
-
-type ForEachCallback = (key: string, value: string, index: number) => void
-
 const nodeEnv = getNodeEnv()
 const mipraEnv = getMipraEnv()
 
 export class Dotenv {
-  #envObject: EnvObject = {}
-
   constructor() {}
 
   #resolve(...dir: (string | undefined)[]) {
     return processResolve(['.env', ...dir].join('.'))
-  }
-
-  get #isReady() {
-    for (const key in this.#envObject) {
-      return true
-    }
-    return false
-  }
-
-  get envObject() {
-    if (!this.#isReady) {
-      this.loadEnv()
-    }
-    return this.#envObject
   }
 
   loadEnv() {
@@ -80,7 +56,7 @@ export class Dotenv {
       !localMipraEnvConfig.error && localMipraEnvConfig.parsed
     )
 
-    this.#envObject = Object.keys(envObject).reduce((ret, key) => {
+    return Object.keys(envObject).reduce((ret, key) => {
       if (this.startsWithKey(key)) {
         const value = this.parsed(Reflect.get(envObject, key), envObject)
         Reflect.set(envObject, key, JSON.parse(value))
@@ -88,7 +64,6 @@ export class Dotenv {
       }
       return ret
     }, {} as EnvObject)
-    return this.#envObject
   }
 
   object() {
@@ -116,36 +91,6 @@ export class Dotenv {
         .join('')
     }
     return JSON.stringify(input)
-  }
-
-  forEach(callback: ForEachCallback) {
-    const envObject = this.envObject
-    const keys = Object.keys(envObject)
-    let i = 0
-
-    while (i < keys.length) {
-      const key = keys[i]
-      const value = Reflect.get(envObject, key)
-      callback(key, this.formatValue(value), i)
-      i++
-    }
-  }
-
-  filter(callback: FilterCallback) {
-    const newObject = {} as EnvObject
-    const envObject = this.envObject
-    const keys = Object.keys(envObject)
-    let i = 0
-
-    while (keys.length) {
-      const key = keys.shift()!
-      const value = Reflect.get(envObject, key)
-      const result = callback(key, value, i)
-      if (result === true) {
-        Reflect.set(newObject, key, this.formatValue(value))
-      }
-      i++
-    }
   }
 
   startsWithKey(key: string) {

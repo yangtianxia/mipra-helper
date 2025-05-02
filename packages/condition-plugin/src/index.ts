@@ -2,10 +2,11 @@ import {
   definePlugin,
   processResolve,
   toJson,
+  kleur,
 } from '@mipra-helper/define-plugin'
 import shell from 'shelljs'
 import fs from 'fs-extra'
-import { cosmiconfigSync } from 'cosmiconfig'
+import { cosmiconfigSync, type PublicExplorerSync } from 'cosmiconfig'
 import { isNil, isFunction, isArray } from '@txjs/bool'
 import { toArray, shallowMerge } from '@txjs/shared'
 
@@ -21,7 +22,7 @@ interface ConditionPluginOption {
 
 export default definePlugin<ConditionPluginOption>(
   (ctx, option) => {
-    option.monitor ??= true
+    option.monitor ??= ctx.isWatch
 
     const configFileName = Reflect.get(configFileNameMap, ctx.mipraEnv)
     const fields = Reflect.get(fieldNameMap, ctx.mipraEnv)
@@ -29,15 +30,16 @@ export default definePlugin<ConditionPluginOption>(
 
     const configPath = processResolve(ctx.outputPath, configFileName)
 
-    const transformer = (option: Record<string, any>) => {
-      return fieldKeys.reduce(
-        (obj, key) => {
-          const fieldKey = fields[key as keyof typeof fields]
-          obj[fieldKey] = option[key]
-          return obj
-        },
-        {} as Record<string, any>
-      )
+    const transformer = (options: Record<string, any>) => {
+      const newObject = {} as Record<string, any>
+      fieldKeys.forEach((key) => {
+        const name = Reflect.get(fields, key)
+        const value = Reflect.get(options, key)
+        if (name && value) {
+          Reflect.set(newObject, name, value)
+        }
+      })
+      return newObject
     }
 
     const getNodeEnv = (env?: string) => {
@@ -84,29 +86,37 @@ export default definePlugin<ConditionPluginOption>(
       }
     }
 
-    const readConfig = (): ConditionOption[] | undefined => {
-      if (shell.test('-e', processResolve('.conditionrc.ts'))) {
-        try {
-          const explorer = cosmiconfigSync('condition', {
-            cache: false,
-          })
-          const result = explorer.load('.conditionrc.ts')
+    const conditionPath = processResolve('.conditionrc.ts')
+    let explorer: PublicExplorerSync
 
-          // 存在编译条件配置
-          if (result) {
-            let source: any
-            if (isFunction(result.config)) {
-              source = result.config()
-            } else if (isArray(result.config)) {
-              source = result.config
-            }
-            if (isArray(source)) {
-              return source
-            }
+    const readConfig = (): ConditionOption[] | void => {
+      if (!shell.test('-e', conditionPath)) return
+
+      if (!explorer) {
+        explorer = cosmiconfigSync('condition', {
+          searchPlaces: ['.conditionrc.ts'],
+          stopDir: process.cwd(),
+          cache: false,
+        })
+      }
+
+      try {
+        const result = explorer.search()
+
+        // 存在编译条件配置
+        if (result) {
+          let source: any
+          if (isFunction(result.config)) {
+            source = result.config()
+          } else if (isArray(result.config)) {
+            source = result.config
           }
-        } catch (error) {
-          ctx.warn(error)
+          if (isArray(source)) {
+            return source
+          }
         }
+      } catch (error) {
+        ctx.warn(error)
       }
     }
 
@@ -122,8 +132,7 @@ export default definePlugin<ConditionPluginOption>(
         const compiles = generate(source)
         const tempValue = shell.cat(configPath)
         const origalConfig = toJson(tempValue)
-        const finalConfig = shallowMerge(origalConfig, compiles)
-
+        const finalConfig = shallowMerge({}, origalConfig, compiles)
         shell.ShellString(JSON.stringify(finalConfig, null, 2)).to(configPath)
         callback?.()
       } catch (error) {
@@ -138,22 +147,20 @@ export default definePlugin<ConditionPluginOption>(
     })
 
     ctx.modifyWebpackChain(({ chain }) => {
-      if (ctx.isWatch) {
-        chain
-          .plugin('ConditionWatchFilePlugin')
-          .use(ConditionWatchFilePlugin, [
-            {
-              monitor: option.monitor,
-              path: processResolve('.conditionrc.ts'),
-              change: () => {
-                build(() => {
-                  ctx.logger('Update completed')
-                })
-              },
+      chain
+        .plugin('conditionWatchFilePlugin')
+        .use(ConditionWatchFilePlugin, [
+          {
+            monitor: option.monitor,
+            path: processResolve('.conditionrc.ts'),
+            change: (path: string) => {
+              build(() => {
+                ctx.logger(`Update ${kleur.blue(path)}`)
+              })
             },
-          ])
-          .end()
-      }
+          },
+        ])
+        .end()
     })
   },
   {

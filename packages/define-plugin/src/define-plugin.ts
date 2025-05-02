@@ -12,6 +12,8 @@ import {
   type NodeEnv,
 } from './utils'
 
+export { kleur }
+
 export interface PluginContext extends IPluginContext {
   nodeEnv: NodeEnv
   mipraEnv: MipraEnv

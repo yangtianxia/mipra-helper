@@ -10,6 +10,11 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.esm.mjs",
       "require": "./dist/index.cjs.js"
+    },
+    "./vant-icons": {
+      "types": "./dist/vant-icons.d.ts",
+      "import": "./dist/vant-icons.mjs",
+      "require": "./dist/vant-icons.js"
     }
   },
   "files": [
@@ -51,7 +56,6 @@
   "dependencies": {
     "@mipra-helper/define-plugin": "workspace:^",
     "@mipra-helper/tsconfig": "workspace:^",
-    "@txjs/bool": "^1.0.3",
     "prettier": "^3.5.3",
     "shelljs": "^0.8.5"
   }

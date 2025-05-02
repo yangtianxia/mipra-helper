@@ -1,15 +1,17 @@
 import shell from 'shelljs'
-import { format } from 'prettier'
-import { isPlainObject } from '@txjs/bool'
-import { definePlugin, processResolve } from '@mipra-helper/define-plugin'
-import type { DefineDeclare } from './utils'
+import {
+  definePlugin,
+  processResolve,
+  kleur,
+} from '@mipra-helper/define-plugin'
 
-export * from './utils'
-export * from './icons'
+import { DeclareTypes } from './declare-types'
+
+export * from './declare-types'
 
 interface TypesPluginOption {
   outputRoot?: string
-  declare?: DefineDeclare[]
+  declare?: DeclareTypes[]
 }
 
 export default definePlugin<TypesPluginOption>(
@@ -17,49 +19,47 @@ export default definePlugin<TypesPluginOption>(
     option.outputRoot ||= 'types'
     option.declare ||= []
 
-    const declare = option.declare
     const outputRoot = processResolve(
       ctx.initialConfig.outputRoot,
       option.outputRoot
     )
 
-    let created = false
-
-    function generate() {
+    function build() {
       if (!shell.test('-e', outputRoot)) {
         shell.mkdir('-p', outputRoot)
       }
 
-      declare
-        .map((generate) => generate())
-        .filter(isPlainObject)
-        .forEach(async (config) => {
+      option.declare?.forEach(async (declare) => {
+        const sourceString = await declare.output()
+        if (sourceString) {
           shell
-            .ShellString(
-              await format(config.sourceString, {
-                parser: 'typescript',
-                semi: false,
-                tabWidth: 2,
-                useTabs: false,
-                singleQuote: true,
-                printWidth: 80,
-                endOfLine: 'auto',
-              })
-            )
-            .to(processResolve(outputRoot, config.fileName))
-        })
+            .ShellString(sourceString)
+            .to(processResolve(outputRoot, declare.fileName))
+        }
+      })
     }
 
     ctx.onBuildComplete(() => {
-      generate()
-      created = true
+      build()
       ctx.logger('Build completed')
     })
 
-    ctx.onBuildFinish(() => {
-      if (created) {
-        generate()
-        ctx.logger('Update completed')
+    option.declare?.forEach((declare) => {
+      if (declare.eventName) {
+        ctx.register({
+          name: declare.eventName,
+          fn: async (opts: any) => {
+            const sourceString = await declare.output()
+            if (sourceString) {
+              shell
+                .ShellString(sourceString)
+                .to(processResolve(outputRoot, declare.fileName))
+            }
+            ctx.logger(
+              `Dependency ${kleur.white(declare.eventName!)} update ${kleur.blue(opts.path)}`
+            )
+          },
+        })
       }
     })
   },
