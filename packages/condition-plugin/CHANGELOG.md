@@ -1,5 +1,11 @@
 # @mipra-helper/condition-plugin
 
+## 0.0.3
+
+### Patch Changes
+
+- fix(condition-plugin) 修复配置文件问题
+
 ## 0.0.2
 
 ### Patch Changes
