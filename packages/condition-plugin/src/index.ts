@@ -6,7 +6,8 @@ import {
 } from '@mipra-helper/define-plugin'
 import shell from 'shelljs'
 import fs from 'fs-extra'
-import { cosmiconfigSync, type PublicExplorerSync } from 'cosmiconfig'
+import { cosmiconfig, type PublicExplorer } from 'cosmiconfig'
+import { TypeScriptLoader } from 'cosmiconfig-typescript-loader'
 import { isNil, isFunction, isArray } from '@txjs/bool'
 import { toArray, shallowMerge } from '@txjs/shared'
 
@@ -87,21 +88,24 @@ export default definePlugin<ConditionPluginOption>(
     }
 
     const conditionPath = processResolve('.conditionrc.ts')
-    let explorer: PublicExplorerSync
+    let explorer: PublicExplorer
 
-    const readConfig = (): ConditionOption[] | void => {
+    const readConfig = async (): Promise<ConditionOption[] | void> => {
       if (!shell.test('-e', conditionPath)) return
 
       if (!explorer) {
-        explorer = cosmiconfigSync('condition', {
+        explorer = cosmiconfig('condition', {
           searchPlaces: ['.conditionrc.ts'],
+          loaders: {
+            '.ts': TypeScriptLoader(),
+          },
           stopDir: process.cwd(),
           cache: false,
         })
       }
 
       try {
-        const result = explorer.search()
+        const result = await explorer.search()
 
         // 存在编译条件配置
         if (result) {
@@ -120,13 +124,13 @@ export default definePlugin<ConditionPluginOption>(
       }
     }
 
-    const build = (callback?: () => void) => {
+    const build = async (callback?: () => void) => {
       if (!shell.test('-e', configPath)) {
         shell.touch(configPath)
         fs.writeFileSync(configPath, '{}')
       }
 
-      const source = readConfig() || []
+      const source = (await readConfig()) || []
 
       try {
         const compiles = generate(source)
