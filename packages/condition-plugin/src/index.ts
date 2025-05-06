@@ -97,7 +97,9 @@ export default definePlugin<ConditionPluginOption>(
         explorer = cosmiconfig('condition', {
           searchPlaces: ['.conditionrc.ts'],
           loaders: {
-            '.ts': TypeScriptLoader(),
+            '.ts': TypeScriptLoader({
+              moduleCache: false,
+            }),
           },
           stopDir: process.cwd(),
           cache: false,

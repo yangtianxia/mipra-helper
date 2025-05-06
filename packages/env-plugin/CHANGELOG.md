@@ -1,5 +1,13 @@
 # @mipra-helper/env-plugin
 
+## 0.0.3
+
+### Patch Changes
+
+- Updated dependencies
+  - @mipra-helper/define-plugin@0.0.3
+  - @mipra-helper/declare-plugin@0.0.3
+
 ## 0.0.2
 
 ### Patch Changes
