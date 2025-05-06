@@ -1,5 +1,11 @@
 # @mipra-helper/define-plugin
 
+## 0.0.3
+
+### Patch Changes
+
+- fix 修复类型声明问题
+
 ## 0.0.2
 
 ### Patch Changes
