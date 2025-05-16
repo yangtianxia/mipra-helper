@@ -1,42 +1,42 @@
-import shell from 'shelljs'
 import {
   definePlugin,
   processResolve,
   kleur,
 } from '@mipra-helper/define-plugin'
-
+import fs from 'fs-extra'
 import { DeclareTypes } from './declare-types'
-
 export * from './declare-types'
 
 interface TypesPluginOption {
-  outputRoot?: string
+  outputDir?: string
   declare?: DeclareTypes[]
 }
 
 export default definePlugin<TypesPluginOption>(
   (ctx, option) => {
-    option.outputRoot ||= 'types'
+    option.outputDir ||= 'types'
     option.declare ||= []
 
-    const outputRoot = processResolve(
-      ctx.initialConfig.outputRoot,
-      option.outputRoot
-    )
+    const outputRoot = processResolve(ctx.outputRoot, option.outputDir)
 
     function build() {
-      if (!shell.test('-e', outputRoot)) {
-        shell.mkdir('-p', outputRoot)
-      }
-
-      option.declare?.forEach(async (declare) => {
-        const sourceString = await declare.output()
-        if (sourceString) {
-          shell
-            .ShellString(sourceString)
-            .to(processResolve(outputRoot, declare.fileName))
+      try {
+        if (!fs.existsSync(outputRoot)) {
+          fs.mkdirSync(outputRoot)
         }
-      })
+
+        option.declare?.forEach(async (declare) => {
+          const sourceString = await declare.output(ctx)
+          if (sourceString) {
+            fs.outputFileSync(
+              processResolve(outputRoot, declare.fileName),
+              sourceString
+            )
+          }
+        })
+      } catch (error) {
+        ctx.warn(error)
+      }
     }
 
     ctx.onBuildComplete(() => {
@@ -49,11 +49,12 @@ export default definePlugin<TypesPluginOption>(
         ctx.register({
           name: declare.eventName,
           fn: async (opts: any) => {
-            const sourceString = await declare.output()
+            const sourceString = await declare.output(ctx)
             if (sourceString) {
-              shell
-                .ShellString(sourceString)
-                .to(processResolve(outputRoot, declare.fileName))
+              fs.outputFileSync(
+                processResolve(outputRoot, declare.fileName),
+                sourceString
+              )
             }
             ctx.logger(
               `Dependency ${kleur.white(declare.eventName!)} update ${kleur.blue(opts.path)}`

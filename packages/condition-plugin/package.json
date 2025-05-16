@@ -1,6 +1,6 @@
 {
   "name": "@mipra-helper/condition-plugin",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "mipra helper miniprogram condition compiler plugin.",
   "main": "./dist/index.cjs.js",
   "module": "./dist/index.esm.mjs",
@@ -10,6 +10,11 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.esm.mjs",
       "require": "./dist/index.cjs.js"
+    },
+    "./define-config": {
+      "types": "./dist/define-config.d.ts",
+      "import": "./dist/define-config.mjs",
+      "require": "./dist/define-config.js"
     }
   },
   "files": [
@@ -21,8 +26,8 @@
     "format": "prettier --white src/",
     "build:types": "tsc -p ./tsconfig.json --emitDeclarationOnly",
     "build:bundle": "ts-node ./build.ts --target=es2022 --platform=node",
-    "build": "npm run lint && npm run build:bundle && npm run build:types",
-    "dev": "npm run lint && npm run build:bundle -- --w && npm run build:types"
+    "build": "npm run lint && npm run build:types && npm run build:bundle",
+    "dev": "npm run lint && npm run build:types && npm run build:bundle -- --w"
   },
   "publishConfig": {
     "access": "public",
@@ -55,7 +60,6 @@
     "@txjs/shared": "^1.0.5",
     "cosmiconfig": "^9.0.0",
     "cosmiconfig-typescript-loader": "^6.1.0",
-    "fs-extra": "^11.3.0",
-    "shelljs": "^0.8.5"
+    "fs-extra": "^11.3.0"
   }
 }

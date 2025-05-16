@@ -1,5 +1,5 @@
-import shell from 'shelljs'
-import { processResolve } from '@mipra-helper/define-plugin'
+import { processResolve, type PluginContext } from '@mipra-helper/define-plugin'
+import fs from 'fs-extra'
 import { DeclareTypes, type DeclareTypesOption } from './declare-types'
 
 const CLS_REGEX = /\.van-icon-(.+):before\s+{\n.+\n}/gi
@@ -15,10 +15,13 @@ export class VantIconTypes extends DeclareTypes {
 
   override eventName?: string
 
-  override build(): string | undefined {
-    const vantIconsPath = processResolve('node_modules/@vant/icons')
-    if (shell.test('-e', vantIconsPath)) {
-      const tempValue = shell.cat(
+  override build(ctx: PluginContext) {
+    const vantIconsPath = processResolve(
+      ctx.paths.nodeModulesPath,
+      '@vant/icons'
+    )
+    if (fs.existsSync(vantIconsPath)) {
+      const tempValue = fs.readFileSync(
         processResolve(vantIconsPath, 'src/common.less')
       )
       const arrString = [] as string[]

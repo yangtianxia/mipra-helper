@@ -1,6 +1,6 @@
 {
   "name": "@mipra-helper/declare-plugin",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "mipra helper typescript types declare plugin.",
   "main": "./dist/index.cjs.js",
   "module": "./dist/index.esm.mjs",
@@ -26,8 +26,8 @@
     "format": "prettier --white src/",
     "build:types": "tsc -p ./tsconfig.json --emitDeclarationOnly",
     "build:bundle": "ts-node ./build.ts --target=es2022 --platform=node",
-    "build": "pnpm lint && pnpm build:bundle && pnpm build:types",
-    "dev": "npm run lint && npm run build:bundle -- --w && npm run build:types"
+    "build": "npm run lint && npm run build:types && npm run build:bundle",
+    "dev": "npm run lint && npm run build:types && npm run build:bundle -- --w"
   },
   "publishConfig": {
     "access": "public",
@@ -56,7 +56,7 @@
   "dependencies": {
     "@mipra-helper/define-plugin": "workspace:^",
     "@mipra-helper/tsconfig": "workspace:^",
-    "prettier": "^3.5.3",
-    "shelljs": "^0.8.5"
+    "fs-extra": "^11.3.0",
+    "prettier": "^3.5.3"
   }
 }

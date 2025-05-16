@@ -1,10 +1,8 @@
 import {
   definePlugin,
   processResolve,
-  toJson,
   kleur,
 } from '@mipra-helper/define-plugin'
-import shell from 'shelljs'
 import fs from 'fs-extra'
 import { cosmiconfig, type PublicExplorer } from 'cosmiconfig'
 import { TypeScriptLoader } from 'cosmiconfig-typescript-loader'
@@ -12,10 +10,8 @@ import { isNil, isFunction, isArray } from '@txjs/bool'
 import { toArray, shallowMerge } from '@txjs/shared'
 
 import { ConditionWatchFilePlugin } from './watch-file'
-import { type ConditionOption } from './define-condition'
+import { type Option } from './define-config'
 import { configFileNameMap, fieldNameMap } from './utils'
-
-export * from './define-condition'
 
 interface ConditionPluginOption {
   monitor?: boolean
@@ -35,7 +31,15 @@ export default definePlugin<ConditionPluginOption>(
       const newObject = {} as Record<string, any>
       fieldKeys.forEach((key) => {
         const name = Reflect.get(fields, key)
-        const value = Reflect.get(options, key)
+        let value = Reflect.get(options, key)
+
+        // 抖音编译模式页面路径不支持 '/' 开头
+        if (ctx.mipraEnv === 'tt') {
+          if (key === 'page' && value) {
+            value = value.slice(1)
+          }
+        }
+
         if (name && value) {
           Reflect.set(newObject, name, value)
         }
@@ -54,7 +58,7 @@ export default definePlugin<ConditionPluginOption>(
       }
     }
 
-    const generate = (options: ConditionOption[]) => {
+    const generate = (options: Option[]) => {
       const compiles = options
         .filter((el) => {
           const allEnv = isNil(el.env)
@@ -90,35 +94,35 @@ export default definePlugin<ConditionPluginOption>(
     const conditionPath = processResolve('.conditionrc.ts')
     let explorer: PublicExplorer
 
-    const readConfig = async (): Promise<ConditionOption[] | void> => {
-      if (!shell.test('-e', conditionPath)) return
+    const loadConfig = async (): Promise<Option[] | void> => {
+      if (!fs.pathExistsSync(conditionPath)) return
 
       if (!explorer) {
         explorer = cosmiconfig('condition', {
+          stopDir: process.cwd(),
+          cache: false,
           searchPlaces: ['.conditionrc.ts'],
           loaders: {
             '.ts': TypeScriptLoader({
+              fsCache: 'node_modules/.cache/mipra',
               moduleCache: false,
             }),
           },
-          stopDir: process.cwd(),
-          cache: false,
         })
       }
 
       try {
-        const result = await explorer.search()
+        const result = await explorer.search(process.cwd())
 
-        // 存在编译条件配置
         if (result) {
-          let source: any
+          let config: any
           if (isFunction(result.config)) {
-            source = result.config()
+            config = result.config()
           } else if (isArray(result.config)) {
-            source = result.config
+            config = result.config
           }
-          if (isArray(source)) {
-            return source
+          if (isArray(config)) {
+            return config
           }
         }
       } catch (error) {
@@ -127,19 +131,17 @@ export default definePlugin<ConditionPluginOption>(
     }
 
     const build = async (callback?: () => void) => {
-      if (!shell.test('-e', configPath)) {
-        shell.touch(configPath)
-        fs.writeFileSync(configPath, '{}')
-      }
-
-      const source = (await readConfig()) || []
-
       try {
-        const compiles = generate(source)
-        const tempValue = shell.cat(configPath)
-        const origalConfig = toJson(tempValue)
-        const finalConfig = shallowMerge({}, origalConfig, compiles)
-        shell.ShellString(JSON.stringify(finalConfig, null, 2)).to(configPath)
+        let tempCompiles: any
+        if (fs.pathExistsSync(configPath)) {
+          tempCompiles = fs.readJSONSync(configPath)
+        }
+
+        const compiles = generate((await loadConfig()) || [])
+        const finalConfig = shallowMerge({}, tempCompiles, compiles)
+        await fs.outputJSON(configPath, finalConfig, {
+          spaces: 2,
+        })
         callback?.()
       } catch (error) {
         ctx.warn(error)
@@ -158,7 +160,7 @@ export default definePlugin<ConditionPluginOption>(
         .use(ConditionWatchFilePlugin, [
           {
             monitor: option.monitor,
-            path: processResolve('.conditionrc.ts'),
+            path: conditionPath,
             change: (path: string) => {
               build(() => {
                 ctx.logger(`Update ${kleur.blue(path)}`)

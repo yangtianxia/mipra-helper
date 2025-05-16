@@ -1,5 +1,5 @@
-import path from 'path'
-import shell from 'shelljs'
+import path from 'node:path'
+import fs from 'fs-extra'
 import minimist from 'minimist'
 import { build, context, type BuildOptions, type Plugin } from 'esbuild'
 
@@ -19,14 +19,15 @@ const resolve = (...dir: string[]) => {
   return path.resolve(...dir)
 }
 
+const pkgPath = resolve(process.cwd(), 'package.json')
+
 const ciArgs = minimist(process.argv.slice(2), {
-  string: ['target', 'platform', 'output'],
+  string: ['output', 'target', 'platform'],
   boolean: ['w', 't'],
 })
 
 const output = ciArgs.output || 'dist'
-
-const pkgPath = resolve(process.cwd(), 'package.json')
+const target = ciArgs.target?.split(',') || []
 
 const formatExt = (format: ENUM_FORMAT) => {
   switch (format) {
@@ -65,9 +66,8 @@ const bundle = async (format: ENUM_FORMAT, options: BundleOptions) => {
       external.push(...options.external)
     }
 
-    if (shell.test('-e', pkgPath)) {
-      const tempValue = shell.cat(pkgPath)
-      const { dependencies, peerDependencies } = JSON.parse(tempValue)
+    if (fs.pathExistsSync(pkgPath)) {
+      const { dependencies, peerDependencies } = fs.readJSONSync(pkgPath)
       const ignoreDependencies = Object.assign(
         {},
         dependencies,
@@ -85,12 +85,8 @@ const bundle = async (format: ENUM_FORMAT, options: BundleOptions) => {
     external,
     bundle: true,
     charset: 'utf8',
-    target: ['chrome85'],
+    target: ['chrome85', ...target],
     entryPoints: [`./src/${options.filepath}`],
-  }
-
-  if (ciArgs.target) {
-    buildOptions.target = ciArgs.target
   }
 
   if (ciArgs.platform) {
