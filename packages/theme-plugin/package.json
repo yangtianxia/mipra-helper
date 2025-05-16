@@ -1,6 +1,6 @@
 {
   "name": "@mipra-helper/theme-plugin",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "mipra helper theme plugin.",
   "main": "./dist/index.cjs.js",
   "module": "./dist/index.esm.mjs",

@@ -1,5 +1,24 @@
 # @mipra-helper/condition-plugin
 
+## 0.0.5
+
+### Patch Changes
+
+- fix 修复部分问题
+- Updated dependencies
+  - @mipra-helper/define-plugin@0.0.4
+  - @mipra-helper/env-plugin@0.0.4
+  - @mipra-helper/tsconfig@0.0.3
+
+## 0.0.4
+
+### Patch Changes
+
+- fix(condition-plugin) 修复配置文件
+- Updated dependencies
+  - @mipra-helper/define-plugin@0.0.3
+  - @mipra-helper/env-plugin@0.0.3
+
 ## 0.0.3
 
 ### Patch Changes

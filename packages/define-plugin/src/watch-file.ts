@@ -1,5 +1,5 @@
 import { watch, type FSWatcher } from 'chokidar'
-import { Compiler } from 'webpack'
+import { type Compiler } from 'webpack'
 import { readFileSync } from 'node:fs'
 import { createHash } from 'node:crypto'
 import { globSync } from 'glob'
