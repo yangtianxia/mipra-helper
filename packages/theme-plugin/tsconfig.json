@@ -1,0 +1,14 @@
+{
+  "extends": "@mipra-helper/tsconfig/tsconfig.node",
+  "compilerOptions": {
+    "outDir": "./dist"
+  },
+  "include": [
+    "src/**/*.ts*",
+    "types/**/*.ts*",
+  ],
+  "exclude": [
+    "**/node_modules",
+    "**/.*/"
+  ]
+}
