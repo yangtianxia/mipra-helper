@@ -26,8 +26,8 @@
     "format": "prettier --white src/",
     "build:types": "tsc -p ./tsconfig.json --emitDeclarationOnly",
     "build:bundle": "ts-node ./build.ts --target=es2022 --platform=node",
-    "build": "npm run lint && npm run build:bundle && npm run build:types",
-    "dev": "npm run lint && npm run build:bundle -- --w && npm run build:types"
+    "build": "npm run lint && npm run build:types && npm run build:bundle",
+    "dev": "npm run lint && npm run build:types && npm run build:bundle -- --w"
   },
   "publishConfig": {
     "access": "public",
@@ -50,12 +50,10 @@
   },
   "homepage": "https://github.com/yangtianxia/mipra-helper#readme",
   "peerDependencies": {
-    "@tarojs/service": "^4.0.12"
+    "@tarojs/service": "^4.0.13"
   },
   "devDependencies": {
-    "@tarojs/service": "^4.0.12",
-    "@types/extend": "^3.0.4",
-    "@types/shelljs": "^0.8.15"
+    "@tarojs/service": "^4.0.13"
   },
   "dependencies": {
     "@mipra-helper/tsconfig": "workspace:^",
@@ -66,7 +64,6 @@
     "glob": "^11.0.2",
     "kleur": "^4.1.5",
     "minimist": "^1.2.8",
-    "shelljs": "^0.8.5",
     "webpack": "^5.99.6"
   }
 }

@@ -34,7 +34,7 @@ export abstract class WatchFile {
   apply(compiler: Compiler) {
     if (!this.option.monitor) return
 
-    compiler.hooks.run.tap(this.name, () => {
+    compiler.hooks.initialize.tap(this.name, () => {
       if (!this.watcher) {
         this.watcher = watch(globSync(this.option.path), {
           ignored: 'node_modules/**',

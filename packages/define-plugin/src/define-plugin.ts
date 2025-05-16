@@ -1,6 +1,7 @@
 import type { IPluginContext } from '@tarojs/service'
 import kleur from 'kleur'
 import dayjs from 'dayjs'
+import path from 'node:path'
 import { toArray, noop } from '@txjs/shared'
 import { isNil } from '@txjs/bool'
 import {
@@ -19,6 +20,7 @@ export interface PluginContext extends IPluginContext {
   mipraEnv: MipraEnv
   mipraRoot: string
   outputPath: string
+  outputRoot: string
   isWatch: boolean
   logger(text: string): void
   warn(...args: any): void
@@ -61,15 +63,23 @@ const validator = <T extends Record<string, any>>(
   }
 }
 
-const hasRunnerPlugin = (ctx: PluginContext) => {
-  const foundAt = Array.from(ctx.plugins.keys()).find((el) =>
+const getOutputPath = (ctx: PluginContext) => {
+  let flag = false
+  const target = Array.from(ctx.plugins.keys()).find((el) =>
     el.includes('@mipra-helper/runner-plugin')
   )
-  if (foundAt) {
-    const plugin = ctx.plugins.get(foundAt)
-    return !!plugin?.opts.outputPlatform
+  if (target) {
+    const plugin = ctx.plugins.get(target)
+    flag = !!plugin?.opts.outputPlatform
   }
-  return false
+  if (
+    flag &&
+    !ctx.initialConfig.outputRoot?.endsWith(ctx.mipraEnv) &&
+    !ctx.initialConfig.outputRoot?.endsWith(ctx.nodeEnv)
+  ) {
+    return `${ctx.initialConfig.outputRoot}/${ctx.mipraEnv}`
+  }
+  return ctx.paths.outputPath
 }
 
 export function definePlugin<T extends Record<string, any>>(
@@ -90,14 +100,15 @@ export function definePlugin<T extends Record<string, any>>(
 
   return (ctx, option) => {
     validator(name, rules, option)
-    const outputPath = hasRunnerPlugin(ctx)
-      ? resolve(ctx.paths.outputPath, mipraEnv)
-      : ctx.paths.outputPath
+
+    const outputPath = getOutputPath(ctx)
+    const rootParse = path.parse(ctx.initialConfig.outputRoot!)
 
     ctx.nodeEnv = nodeEnv
     ctx.mipraEnv = mipraEnv
     ctx.mipraRoot = '.mipra'
     ctx.outputPath = outputPath
+    ctx.outputRoot = resolve(rootParse.dir || rootParse.name)
     ctx.isWatch = isWatch()
     ctx.logger = (text: string) => {
       console.log(
@@ -113,7 +124,8 @@ export function definePlugin<T extends Record<string, any>>(
         '\n',
         kleur.gray(`→ Warning... [${dayjs().format('YYYY/MM/DD HH:mm:ss')}]`),
         '\n',
-        ...args
+        ...args,
+        '\n'
       )
     }
     callback.apply(null, [ctx, option || {}])

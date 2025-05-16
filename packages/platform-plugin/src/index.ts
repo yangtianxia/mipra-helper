@@ -1,12 +1,10 @@
 import {
   definePlugin,
   processResolve,
-  toJson,
   kleur,
   type MipraEnv,
 } from '@mipra-helper/define-plugin'
 import { dotenv } from '@mipra-helper/env-plugin'
-import shell from 'shelljs'
 import fs from 'fs-extra'
 import extend from 'extend'
 import { notNil } from '@txjs/bool'
@@ -73,20 +71,16 @@ export default definePlugin<PlatformPluginOption>(
       return newObject
     }
 
-    const build = (callback?: () => void) => {
-      if (!shell.test('-e', configPath)) {
-        shell.touch(configPath)
-        fs.writeFileSync(configPath, '{}')
-      }
-
-      // 私有配置
-      cacheConfig = getPrivateEnv()
-
+    const build = async (callback?: () => void) => {
       try {
         // 读取小程序平台原始配置
-        const tempValue = shell.cat(configPath)
-        const origalConfig = toJson(tempValue)
+        let tempConfig: any
+        if (fs.pathExistsSync(configPath)) {
+          tempConfig = fs.readJSONSync(configPath)
+        }
 
+        // 私有配置
+        cacheConfig = getPrivateEnv()
         // 合并自定义配置
         const mergeConfig = extend(
           true,
@@ -95,8 +89,10 @@ export default definePlugin<PlatformPluginOption>(
           globalConfig,
           independentConfig
         )
-        const finalConfig = extend(true, origalConfig, merged(mergeConfig))
-        shell.ShellString(JSON.stringify(finalConfig, null, 2)).to(configPath)
+        const finalConfig = extend(true, tempConfig, merged(mergeConfig))
+        await fs.outputJSON(configPath, finalConfig, {
+          spaces: 2,
+        })
         callback?.()
       } catch (error) {
         ctx.warn(error)
@@ -110,14 +106,17 @@ export default definePlugin<PlatformPluginOption>(
     })
 
     ctx.onBuildComplete(async () => {
-      // 拷贝配置到指定小程序打包目录
-      if (shell.test('-d', mpConfigPath)) {
+      if (!fs.existsSync(mpConfigPath)) return
+
+      try {
         await fs.copy(mpConfigPath, ctx.outputPath, {
           overwrite: true,
         })
         build(() => {
           ctx.logger('Build completed')
         })
+      } catch (error) {
+        ctx.warn(error)
       }
     })
 

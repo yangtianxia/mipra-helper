@@ -4,10 +4,11 @@
     "jsx": "preserve",
     "strict": true,
     "target": "ES2015",
-    "module": "ESNext",
+    "module": "NodeNext",
     "skipLibCheck": true,
     "esModuleInterop": true,
-    "moduleResolution": "Node",
+    "moduleResolution": "nodenext",
+    "declaration": true,
     "lib": [
       "ES2015",
       "DOM"

@@ -19,6 +19,7 @@ export const fieldNameMap = {
     query: 'pageQuery',
     launchMode: 'launchMode',
     scene: 'scene',
+    extraQuery: 'page',
   },
   tt: {
     title: 'name',
